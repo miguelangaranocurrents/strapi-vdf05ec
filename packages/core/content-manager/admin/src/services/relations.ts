@@ -122,13 +122,19 @@ const relationsApi = contentManagerApi.injectEndpoints({
       },
       serializeQueryArgs: (args) => {
         const { endpointName, queryArgs } = args;
+        /**
+         * Every param except `page` identifies the search. `id` must be part of the key:
+         * several components sharing a field name (e.g. two carousels in a dynamic zone)
+         * otherwise read each other's cached results. `page` is left out so that all pages
+         * of one search share a cache entry, which `merge` relies on.
+         */
+        const { page: _page, ...params } = queryArgs.params ?? {};
+
         return {
           endpointName,
           model: queryArgs.model,
           targetField: queryArgs.targetField,
-          _q: queryArgs.params?._q,
-          idsToOmit: queryArgs.params?.idsToOmit,
-          idsToInclude: queryArgs.params?.idsToInclude,
+          ...params,
         };
       },
       merge: (currentCache, newItems) => {
